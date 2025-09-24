@@ -174,7 +174,7 @@ module.exports = {
                         .addSeparatorComponents(new SeparatorBuilder())
                         .addSectionComponents(wagerSection)
                         .addComponents(
-                            new ActionRowBuilder().addComponents(acceptButton, declineButton))
+                            new ActionRowBuilder().addComponents(acceptButton, declineButton)
                         );
 
                     await interaction.update({
