@@ -114,6 +114,9 @@ module.exports = {
     },
 
     async handleButton(interaction, client, DatabaseManager) {
+        // Defer the update immediately to prevent the interaction from failing
+        await interaction.deferUpdate();
+
         if (interaction.customId === 'tutorial_step2') {
             const completeButton = new ButtonBuilder()
                 .setCustomId('tutorial_complete')
@@ -136,7 +139,7 @@ module.exports = {
                     new ActionRowBuilder().addComponents(completeButton)
                 );
 
-            await interaction.update({
+            await interaction.editReply({
                 components: [tutorialContainer],
                 flags: MessageFlags.IsComponentsV2
             });
@@ -165,7 +168,7 @@ module.exports = {
                 .addSeparatorComponents(new SeparatorBuilder())
                 .addSectionComponents(balanceSection);
 
-            await interaction.update({
+            await interaction.editReply({
                 components: [completeContainer],
                 flags: MessageFlags.IsComponentsV2
             });
