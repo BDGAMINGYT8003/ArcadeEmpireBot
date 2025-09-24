@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ContainerBuilder, SectionBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder, ContainerBuilder, SectionBuilder, TextDisplayBuilder, SeparatorBuilder, MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 // Game state storage
 const activeGames = new Map();
@@ -82,38 +82,34 @@ module.exports = {
         // Send challenger confirmation
         const arcadeTokenEmoji = '<:ArcadeTokens:1420147365213507686>';
         
+        const acceptButton = new ButtonBuilder()
+            .setCustomId(`tictactoe_challenger_accept_${challengeId}`)
+            .setLabel('Yes, Challenge!')
+            .setStyle(ButtonStyle.Success)
+            .setEmoji('✅');
+
+        const declineButton = new ButtonBuilder()
+            .setCustomId(`tictactoe_challenger_decline_${challengeId}`)
+            .setLabel('Cancel')
+            .setStyle(ButtonStyle.Danger)
+            .setEmoji('❌');
+
+        const wagerSection = new SectionBuilder()
+            .addTextDisplayComponents(
+                new TextDisplayBuilder()
+                    .setContent(`**💰 Wager:** ${arcadeTokenEmoji} ${wager.toLocaleString()} AT\n**🏆 Winner Gets:** ${arcadeTokenEmoji} ${Math.floor(wager * 1.85).toLocaleString()} AT\n\n**${challenger.username}, confirm your challenge:**`)
+            );
+
         const challengeContainer = new ContainerBuilder()
             .setAccentColor(0xf59e0b)
             .addTextDisplayComponents(
-                textDisplay => textDisplay
+                new TextDisplayBuilder()
                     .setContent(`**🎯 Tic-tac-toe Challenge**\n\n${challenger.username} wants to challenge ${opponent.username}!`)
             )
-            .addSeparatorComponents(separator => separator)
-            .addSectionComponents(
-                section => section
-                    .addTextDisplayComponents(
-                        textDisplay => textDisplay
-                            .setContent(`**💰 Wager:** ${arcadeTokenEmoji} ${wager.toLocaleString()} AT\n**🏆 Winner Gets:** ${arcadeTokenEmoji} ${Math.floor(wager * 1.85).toLocaleString()} AT\n\n**${challenger.username}, confirm your challenge:**`)
-                    )
-            )
+            .addSeparatorComponents(new SeparatorBuilder())
+            .addSectionComponents(wagerSection)
             .addActionRowComponents(
-                actionRow => actionRow
-                    .setComponents([
-                        {
-                            type: 2,
-                            style: 3,
-                            label: 'Yes, Challenge!',
-                            custom_id: `tictactoe_challenger_accept_${challengeId}`,
-                            emoji: { name: '✅' }
-                        },
-                        {
-                            type: 2,
-                            style: 4,
-                            label: 'Cancel',
-                            custom_id: `tictactoe_challenger_decline_${challengeId}`,
-                            emoji: { name: '❌' }
-                        }
-                    ])
+                new ActionRowBuilder().addComponents(acceptButton, declineButton)
             );
 
         const response = await interaction.reply({
@@ -151,38 +147,34 @@ module.exports = {
                     
                     const arcadeTokenEmoji = '<:ArcadeTokens:1420147365213507686>';
                     
+                    const acceptButton = new ButtonBuilder()
+                        .setCustomId(`tictactoe_opponent_accept_${challengeId}`)
+                        .setLabel('Accept Challenge!')
+                        .setStyle(ButtonStyle.Success)
+                        .setEmoji('⚔️');
+
+                    const declineButton = new ButtonBuilder()
+                        .setCustomId(`tictactoe_opponent_decline_${challengeId}`)
+                        .setLabel('Decline')
+                        .setStyle(ButtonStyle.Danger)
+                        .setEmoji('❌');
+
+                    const wagerSection = new SectionBuilder()
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder()
+                                .setContent(`**💰 Wager:** ${arcadeTokenEmoji} ${challengeData.wager.toLocaleString()} AT\n**🏆 Winner Gets:** ${arcadeTokenEmoji} ${Math.floor(challengeData.wager * 1.85).toLocaleString()} AT\n\n**${challengeData.opponent.username}, do you accept?**`)
+                        );
+
                     const opponentContainer = new ContainerBuilder()
                         .setAccentColor(0xf59e0b)
                         .addTextDisplayComponents(
-                            textDisplay => textDisplay
+                            new TextDisplayBuilder()
                                 .setContent(`**🎯 Tic-tac-toe Challenge**\n\n${challengeData.challenger.username} has challenged you to Tic-tac-toe!`)
                         )
-                        .addSeparatorComponents(separator => separator)
-                        .addSectionComponents(
-                            section => section
-                                .addTextDisplayComponents(
-                                    textDisplay => textDisplay
-                                        .setContent(`**💰 Wager:** ${arcadeTokenEmoji} ${challengeData.wager.toLocaleString()} AT\n**🏆 Winner Gets:** ${arcadeTokenEmoji} ${Math.floor(challengeData.wager * 1.85).toLocaleString()} AT\n\n**${challengeData.opponent.username}, do you accept?**`)
-                                )
-                        )
+                        .addSeparatorComponents(new SeparatorBuilder())
+                        .addSectionComponents(wagerSection)
                         .addActionRowComponents(
-                            actionRow => actionRow
-                                .setComponents([
-                                    {
-                                        type: 2,
-                                        style: 3,
-                                        label: 'Accept Challenge!',
-                                        custom_id: `tictactoe_opponent_accept_${challengeId}`,
-                                        emoji: { name: '⚔️' }
-                                    },
-                                    {
-                                        type: 2,
-                                        style: 4,
-                                        label: 'Decline',
-                                        custom_id: `tictactoe_opponent_decline_${challengeId}`,
-                                        emoji: { name: '❌' }
-                                    }
-                                ])
+                            new ActionRowBuilder().addComponents(acceptButton, declineButton)
                         );
 
                     await interaction.update({
@@ -251,25 +243,21 @@ module.exports = {
 
         const currentPlayerSymbol = gameData.currentPlayer === gameData.challenger.id ? 'X' : 'O';
         
-        // Create 3x3 button grid
         const gameContainer = new ContainerBuilder()
             .setAccentColor(0x8b5cf6)
             .addTextDisplayComponents(
-                textDisplay => textDisplay
+                new TextDisplayBuilder()
                     .setContent(`**⚔️ Tic-tac-toe Battle**\n\n${gameData.challenger.username} (❌) vs ${gameData.opponent.username} (⭕)`)
             )
-            .addSeparatorComponents(separator => separator)
+            .addSeparatorComponents(new SeparatorBuilder())
             .addTextDisplayComponents(
-                textDisplay => textDisplay
+                new TextDisplayBuilder()
                     .setContent(`**🎯 Current Turn:** ${currentPlayerName} (${currentPlayerSymbol === 'X' ? '❌' : '⭕'})`)
             );
 
         // Add three rows of buttons for the game board
         for (let row = 0; row < 3; row++) {
-            const actionRow = {
-                type: 1, // Action Row
-                components: []
-            };
+            const rowButtons = [];
             
             for (let col = 0; col < 3; col++) {
                 const position = row * 3 + col;
@@ -279,28 +267,30 @@ module.exports = {
                 
                 if (cellValue === null) {
                     label = '⬜';
-                    style = 2; // Secondary
+                    style = ButtonStyle.Secondary;
                     disabled = gameData.currentPlayer !== interaction.user.id;
                 } else if (cellValue === 'X') {
                     label = '❌';
-                    style = 4; // Danger (red)
+                    style = ButtonStyle.Danger;
                     disabled = true;
                 } else {
                     label = '⭕';
-                    style = 1; // Primary (blue)
+                    style = ButtonStyle.Primary;
                     disabled = true;
                 }
                 
-                actionRow.components.push({
-                    type: 2, // Button
-                    label: label,
-                    custom_id: `tictactoe_move_${position}_${challengeId}`,
-                    style: style,
-                    disabled: disabled
-                });
+                const button = new ButtonBuilder()
+                    .setCustomId(`tictactoe_move_${position}_${challengeId}`)
+                    .setLabel(label)
+                    .setStyle(style)
+                    .setDisabled(disabled);
+                
+                rowButtons.push(button);
             }
             
-            gameContainer.addActionRowComponents(actionRow => actionRow.setComponents(actionRow.components));
+            gameContainer.addActionRowComponents(
+                new ActionRowBuilder().addComponents(rowButtons)
+            );
         }
 
         await interaction.update({
@@ -385,28 +375,31 @@ module.exports = {
         }
 
         // Create result message with final board
-        const resultContainer = new ContainerBuilder()
-            .setAccentColor(winner ? 0x10b981 : 0x6b7280)
+        const boardSection = new SectionBuilder()
             .addTextDisplayComponents(
-                textDisplay => textDisplay
-                    .setContent(`**🏆 Tic-tac-toe Results**\n\n${result}`)
-            )
-            .addSeparatorComponents(separator => separator)
-            .addTextDisplayComponents(
-                textDisplay => textDisplay
+                new TextDisplayBuilder()
                     .setContent(`**Final Board:**\n${this.formatBoard(gameData.board)}`)
             );
 
+        const resultContainer = new ContainerBuilder()
+            .setAccentColor(winner ? 0x10b981 : 0x6b7280)
+            .addTextDisplayComponents(
+                new TextDisplayBuilder()
+                    .setContent(`**🏆 Tic-tac-toe Results**\n\n${result}`)
+            )
+            .addSeparatorComponents(new SeparatorBuilder())
+            .addSectionComponents(boardSection);
+
         if (winner) {
-            resultContainer.addSeparatorComponents(separator => separator)
+            resultContainer.addSeparatorComponents(new SeparatorBuilder())
                 .addTextDisplayComponents(
-                    textDisplay => textDisplay
+                    new TextDisplayBuilder()
                         .setContent(`**💰 Payout:** <:ArcadeTokens:1420147365213507686> ${payout.toLocaleString()} AT to ${winnerUser.username}`)
                 );
         } else {
-            resultContainer.addSeparatorComponents(separator => separator)
+            resultContainer.addSeparatorComponents(new SeparatorBuilder())
                 .addTextDisplayComponents(
-                    textDisplay => textDisplay
+                    new TextDisplayBuilder()
                         .setContent(`**💰 Wagers Returned:** <:ArcadeTokens:1420147365213507686> ${gameData.wager.toLocaleString()} AT to each player`)
                 );
         }
@@ -464,7 +457,7 @@ module.exports = {
         const cancelContainer = new ContainerBuilder()
             .setAccentColor(0x6b7280)
             .addTextDisplayComponents(
-                textDisplay => textDisplay
+                new TextDisplayBuilder()
                     .setContent(`**❌ Challenge Cancelled**\n\n${reason}`)
             );
 
@@ -486,7 +479,7 @@ module.exports = {
             const timeoutContainer = new ContainerBuilder()
                 .setAccentColor(0x6b7280)
                 .addTextDisplayComponents(
-                    textDisplay => textDisplay
+                    new TextDisplayBuilder()
                         .setContent(`**⏰ Challenge Expired**\n\nThe challenge timed out after 30 seconds.`)
                 );
 
@@ -503,7 +496,7 @@ module.exports = {
         const errorContainer = new ContainerBuilder()
             .setAccentColor(0xff6b6b)
             .addTextDisplayComponents(
-                textDisplay => textDisplay
+                new TextDisplayBuilder()
                     .setContent(`**🚫 Error**\n\n${message}`)
             );
 

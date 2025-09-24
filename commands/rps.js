@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ContainerBuilder, SectionBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder, ContainerBuilder, SectionBuilder, TextDisplayBuilder, SeparatorBuilder, MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 // Game state storage
 const activeGames = new Map();
@@ -82,38 +82,34 @@ module.exports = {
         // Send challenger confirmation
         const arcadeTokenEmoji = '<:ArcadeTokens:1420147365213507686>';
         
+        const acceptButton = new ButtonBuilder()
+            .setCustomId(`rps_challenger_accept_${challengeId}`)
+            .setLabel('Yes, Challenge!')
+            .setStyle(ButtonStyle.Success)
+            .setEmoji('✅');
+
+        const declineButton = new ButtonBuilder()
+            .setCustomId(`rps_challenger_decline_${challengeId}`)
+            .setLabel('Cancel')
+            .setStyle(ButtonStyle.Danger)
+            .setEmoji('❌');
+
+        const wagerSection = new SectionBuilder()
+            .addTextDisplayComponents(
+                new TextDisplayBuilder()
+                    .setContent(`**💰 Wager:** ${arcadeTokenEmoji} ${wager.toLocaleString()} AT\n**🏆 Winner Gets:** ${arcadeTokenEmoji} ${Math.floor(wager * 1.85).toLocaleString()} AT\n\n**${challenger.username}, confirm your challenge:**`)
+            );
+
         const challengeContainer = new ContainerBuilder()
             .setAccentColor(0xf59e0b)
             .addTextDisplayComponents(
-                textDisplay => textDisplay
+                new TextDisplayBuilder()
                     .setContent(`**🎯 Rock Paper Scissors Challenge**\n\n${challenger.username} wants to challenge ${opponent.username}!`)
             )
-            .addSeparatorComponents(separator => separator)
-            .addSectionComponents(
-                section => section
-                    .addTextDisplayComponents(
-                        textDisplay => textDisplay
-                            .setContent(`**💰 Wager:** ${arcadeTokenEmoji} ${wager.toLocaleString()} AT\n**🏆 Winner Gets:** ${arcadeTokenEmoji} ${Math.floor(wager * 1.85).toLocaleString()} AT\n\n**${challenger.username}, confirm your challenge:**`)
-                    )
-            )
+            .addSeparatorComponents(new SeparatorBuilder())
+            .addSectionComponents(wagerSection)
             .addActionRowComponents(
-                actionRow => actionRow
-                    .setComponents([
-                        {
-                            type: 2,
-                            style: 3,
-                            label: 'Yes, Challenge!',
-                            custom_id: `rps_challenger_accept_${challengeId}`,
-                            emoji: { name: '✅' }
-                        },
-                        {
-                            type: 2,
-                            style: 4,
-                            label: 'Cancel',
-                            custom_id: `rps_challenger_decline_${challengeId}`,
-                            emoji: { name: '❌' }
-                        }
-                    ])
+                new ActionRowBuilder().addComponents(acceptButton, declineButton)
             );
 
         const response = await interaction.reply({
@@ -144,38 +140,34 @@ module.exports = {
                 
                 const arcadeTokenEmoji = '<:ArcadeTokens:1420147365213507686>';
                 
+                const acceptButton = new ButtonBuilder()
+                    .setCustomId(`rps_opponent_accept_${challengeId}`)
+                    .setLabel('Accept Challenge!')
+                    .setStyle(ButtonStyle.Success)
+                    .setEmoji('⚔️');
+
+                const declineButton = new ButtonBuilder()
+                    .setCustomId(`rps_opponent_decline_${challengeId}`)
+                    .setLabel('Decline')
+                    .setStyle(ButtonStyle.Danger)
+                    .setEmoji('❌');
+
+                const wagerSection = new SectionBuilder()
+                    .addTextDisplayComponents(
+                        new TextDisplayBuilder()
+                            .setContent(`**💰 Wager:** ${arcadeTokenEmoji} ${challengeData.wager.toLocaleString()} AT\n**🏆 Winner Gets:** ${arcadeTokenEmoji} ${Math.floor(challengeData.wager * 1.85).toLocaleString()} AT\n\n**${challengeData.opponent.username}, do you accept?**`)
+                    );
+
                 const opponentContainer = new ContainerBuilder()
                     .setAccentColor(0xf59e0b)
                     .addTextDisplayComponents(
-                        textDisplay => textDisplay
+                        new TextDisplayBuilder()
                             .setContent(`**🎯 Rock Paper Scissors Challenge**\n\n${challengeData.challenger.username} has challenged you to Rock Paper Scissors!`)
                     )
-                    .addSeparatorComponents(separator => separator)
-                    .addSectionComponents(
-                        section => section
-                            .addTextDisplayComponents(
-                                textDisplay => textDisplay
-                                    .setContent(`**💰 Wager:** ${arcadeTokenEmoji} ${challengeData.wager.toLocaleString()} AT\n**🏆 Winner Gets:** ${arcadeTokenEmoji} ${Math.floor(challengeData.wager * 1.85).toLocaleString()} AT\n\n**${challengeData.opponent.username}, do you accept?**`)
-                            )
-                    )
+                    .addSeparatorComponents(new SeparatorBuilder())
+                    .addSectionComponents(wagerSection)
                     .addActionRowComponents(
-                        actionRow => actionRow
-                            .setComponents([
-                                {
-                                    type: 2,
-                                    style: 3,
-                                    label: 'Accept Challenge!',
-                                    custom_id: `rps_opponent_accept_${challengeId}`,
-                                    emoji: { name: '⚔️' }
-                                },
-                                {
-                                    type: 2,
-                                    style: 4,
-                                    label: 'Decline',
-                                    custom_id: `rps_opponent_decline_${challengeId}`,
-                                    emoji: { name: '❌' }
-                                }
-                            ])
+                        new ActionRowBuilder().addComponents(acceptButton, declineButton)
                     );
 
                 await interaction.update({
@@ -229,12 +221,12 @@ module.exports = {
         const gameContainer = new ContainerBuilder()
             .setAccentColor(0x8b5cf6)
             .addTextDisplayComponents(
-                textDisplay => textDisplay
+                new TextDisplayBuilder()
                     .setContent(`**⚔️ Rock Paper Scissors Battle**\n\n${challengeData.challenger.username} vs ${challengeData.opponent.username}`)
             )
-            .addSeparatorComponents(separator => separator)
+            .addSeparatorComponents(new SeparatorBuilder())
             .addTextDisplayComponents(
-                textDisplay => textDisplay
+                new TextDisplayBuilder()
                     .setContent(`**💰 Wager:** <:ArcadeTokens:1420147365213507686> ${challengeData.wager.toLocaleString()} AT each\n\nBoth players, check your DMs to make your secret moves!`)
             );
 
@@ -250,37 +242,32 @@ module.exports = {
 
     async sendMoveOptions(user, challengeId) {
         try {
+            const rockButton = new ButtonBuilder()
+                .setCustomId(`rps_move_rock_${challengeId}`)
+                .setLabel('Rock')
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji('🪨');
+
+            const paperButton = new ButtonBuilder()
+                .setCustomId(`rps_move_paper_${challengeId}`)
+                .setLabel('Paper')
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji('📄');
+
+            const scissorsButton = new ButtonBuilder()
+                .setCustomId(`rps_move_scissors_${challengeId}`)
+                .setLabel('Scissors')
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji('✂️');
+
             const moveContainer = new ContainerBuilder()
                 .setAccentColor(0x8b5cf6)
                 .addTextDisplayComponents(
-                    textDisplay => textDisplay
+                    new TextDisplayBuilder()
                         .setContent(`**🎮 Make Your Move**\n\nChoose your move for Rock Paper Scissors!\nThis message is private - only you can see it.`)
                 )
                 .addActionRowComponents(
-                    actionRow => actionRow
-                        .setComponents([
-                            {
-                                type: 2,
-                                style: 2,
-                                label: 'Rock',
-                                custom_id: `rps_move_rock_${challengeId}`,
-                                emoji: { name: '🪨' }
-                            },
-                            {
-                                type: 2,
-                                style: 2,
-                                label: 'Paper',
-                                custom_id: `rps_move_paper_${challengeId}`,
-                                emoji: { name: '📄' }
-                            },
-                            {
-                                type: 2,
-                                style: 2,
-                                label: 'Scissors',
-                                custom_id: `rps_move_scissors_${challengeId}`,
-                                emoji: { name: '✂️' }
-                            }
-                        ])
+                    new ActionRowBuilder().addComponents(rockButton, paperButton, scissorsButton)
                 );
 
             await user.send({
@@ -305,7 +292,7 @@ module.exports = {
         const moveAckContainer = new ContainerBuilder()
             .setAccentColor(0x10b981)
             .addTextDisplayComponents(
-                textDisplay => textDisplay
+                new TextDisplayBuilder()
                     .setContent(`**✅ Move Recorded**\n\nYou chose **${move.charAt(0).toUpperCase() + move.slice(1)}**!\nWaiting for your opponent...`)
             );
 
@@ -364,33 +351,31 @@ module.exports = {
         }
 
         // Create result message
+        const movesSection = new SectionBuilder()
+            .addTextDisplayComponents(
+                new TextDisplayBuilder()
+                    .setContent(`**${gameData.challenger.username}:** ${this.getMoveEmoji(challengerMove)} ${challengerMove.charAt(0).toUpperCase() + challengerMove.slice(1)}\n**${gameData.opponent.username}:** ${this.getMoveEmoji(opponentMove)} ${opponentMove.charAt(0).toUpperCase() + opponentMove.slice(1)}`)
+            );
+
         const resultContainer = new ContainerBuilder()
             .setAccentColor(winner === 'tie' ? 0x6b7280 : 0x10b981)
             .addTextDisplayComponents(
-                textDisplay => textDisplay
+                new TextDisplayBuilder()
                     .setContent(`**🏆 Rock Paper Scissors Results**\n\n${result}`)
             )
-            .addSeparatorComponents(separator => separator)
-            .addSectionComponents(
-                section => section
-                    .addTextDisplayComponents(
-                        textDisplay => textDisplay
-                            .setContent(`**${gameData.challenger.username}:** ${this.getMoveEmoji(challengerMove)} ${challengerMove.charAt(0).toUpperCase() + challengerMove.slice(1)}\n**${gameData.opponent.username}:** ${this.getMoveEmoji(opponentMove)} ${opponentMove.charAt(0).toUpperCase() + opponentMove.slice(1)}`)
-                    )
-            );
+            .addSeparatorComponents(new SeparatorBuilder())
+            .addSectionComponents(movesSection);
 
         if (winner !== 'tie') {
-            resultContainer.addSeparatorComponents(separator => separator)
+            resultContainer.addSeparatorComponents(new SeparatorBuilder())
                 .addTextDisplayComponents(
-                    textDisplay => textDisplay
+                    new TextDisplayBuilder()
                         .setContent(`**💰 Payout:** <:ArcadeTokens:1420147365213507686> ${payout.toLocaleString()} AT to ${winnerUser.username}`)
                 );
         }
 
-        // Find and update the main game message
+        // Send result to both players via DM
         try {
-            // This would need to be stored when the game starts
-            // For now, we'll just send the result to both players via DM
             await gameData.challenger.send({
                 components: [resultContainer],
                 flags: MessageFlags.IsComponentsV2
@@ -437,7 +422,7 @@ module.exports = {
         const cancelContainer = new ContainerBuilder()
             .setAccentColor(0x6b7280)
             .addTextDisplayComponents(
-                textDisplay => textDisplay
+                new TextDisplayBuilder()
                     .setContent(`**❌ Challenge Cancelled**\n\n${reason}`)
             );
 
@@ -459,7 +444,7 @@ module.exports = {
             const timeoutContainer = new ContainerBuilder()
                 .setAccentColor(0x6b7280)
                 .addTextDisplayComponents(
-                    textDisplay => textDisplay
+                    new TextDisplayBuilder()
                         .setContent(`**⏰ Challenge Expired**\n\nThe challenge timed out after 30 seconds.`)
                 );
 
@@ -476,7 +461,7 @@ module.exports = {
         const errorContainer = new ContainerBuilder()
             .setAccentColor(0xff6b6b)
             .addTextDisplayComponents(
-                textDisplay => textDisplay
+                new TextDisplayBuilder()
                     .setContent(`**🚫 Error**\n\n${message}`)
             );
 

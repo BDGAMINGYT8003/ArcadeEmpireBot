@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ContainerBuilder, SectionBuilder, TextDisplayBuilder, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder, ContainerBuilder, SectionBuilder, TextDisplayBuilder, SeparatorBuilder, MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -21,7 +21,7 @@ module.exports = {
                 const errorContainer = new ContainerBuilder()
                     .setAccentColor(0xff6b6b)
                     .addTextDisplayComponents(
-                        textDisplay => textDisplay
+                        new TextDisplayBuilder()
                             .setContent(`**🚫 User Not Found**\n\n${targetUser.username} hasn't joined Arcade Empire yet! They need to use any command to get started.`)
                     );
 
@@ -48,22 +48,23 @@ module.exports = {
         const isOwnBalance = targetUser.id === interaction.user.id;
         const title = isOwnBalance ? '💰 Your Balance' : `💰 ${targetUser.username}'s Balance`;
         
+        const balanceSection = new SectionBuilder()
+            .addTextDisplayComponents(
+                new TextDisplayBuilder()
+                    .setContent(`**${title}**\n\n${arcadeTokenEmoji} **Arcade Tokens:** \`${userProfile.arcadeTokens.toLocaleString()}\` AT\n${goldenJoystickEmoji} **Golden Joysticks:** \`${userProfile.goldenJoysticks.toLocaleString()}\` GJ`)
+            );
+
         const balanceContainer = new ContainerBuilder()
             .setAccentColor(0x4f46e5)
-            .addSectionComponents(
-                section => section
-                    .addTextDisplayComponents(
-                        textDisplay => textDisplay
-                            .setContent(`**${title}**\n\n${arcadeTokenEmoji} **Arcade Tokens:** \`${userProfile.arcadeTokens.toLocaleString()}\` AT\n${goldenJoystickEmoji} **Golden Joysticks:** \`${userProfile.goldenJoysticks.toLocaleString()}\` GJ`)
-                    )
-            );
+            .addSectionComponents(balanceSection);
 
         // Add stats section if it's their own balance
         if (isOwnBalance && userProfile.gamesPlayed > 0) {
             const winRate = Math.round((userProfile.gamesWon / userProfile.gamesPlayed) * 100);
-            balanceContainer.addSeparatorComponents(separator => separator)
+            balanceContainer
+                .addSeparatorComponents(new SeparatorBuilder())
                 .addTextDisplayComponents(
-                    textDisplay => textDisplay
+                    new TextDisplayBuilder()
                         .setContent(`**📊 Game Stats**\nGames Played: \`${userProfile.gamesPlayed}\`\nGames Won: \`${userProfile.gamesWon}\`\nWin Rate: \`${winRate}%\``)
                 );
         }
@@ -84,26 +85,25 @@ module.exports = {
         const arcadeTokenEmoji = '<:ArcadeTokens:1420147365213507686>';
         const goldenJoystickEmoji = '<:GoldenJoysticks:1420147415868244148>';
         
+        const nextButton = new ButtonBuilder()
+            .setCustomId('tutorial_step2')
+            .setLabel('Next: How to Play')
+            .setStyle(ButtonStyle.Primary)
+            .setEmoji('▶️');
+
         const tutorialContainer = new ContainerBuilder()
             .setAccentColor(0x10b981)
             .addTextDisplayComponents(
-                textDisplay => textDisplay
+                new TextDisplayBuilder()
                     .setContent(`**🎮 Welcome to Arcade Empire!**\n\nHi ${interaction.user.username}! You're new here, so let me show you around!`)
             )
-            .addSeparatorComponents(separator => separator)
+            .addSeparatorComponents(new SeparatorBuilder())
             .addTextDisplayComponents(
-                textDisplay => textDisplay
+                new TextDisplayBuilder()
                     .setContent(`**💰 Currency System**\n\n${arcadeTokenEmoji} **Arcade Tokens (AT)** - Primary currency for games\n${goldenJoystickEmoji} **Golden Joysticks (GJ)** - Premium currency for special features\n\nYou start with **1,000 AT** and **0 GJ**!`)
             )
             .addActionRowComponents(
-                actionRow => actionRow
-                    .setComponents([{
-                        type: 2, // Button
-                        style: 1, // Primary
-                        label: 'Next: How to Play',
-                        custom_id: 'tutorial_step2',
-                        emoji: { name: '▶️' }
-                    }])
+                new ActionRowBuilder().addComponents(nextButton)
             );
 
         await interaction.reply({
@@ -115,26 +115,25 @@ module.exports = {
 
     async handleButton(interaction, client, DatabaseManager) {
         if (interaction.customId === 'tutorial_step2') {
+            const completeButton = new ButtonBuilder()
+                .setCustomId('tutorial_complete')
+                .setLabel('Got it! Let me play!')
+                .setStyle(ButtonStyle.Success)
+                .setEmoji('✅');
+
             const tutorialContainer = new ContainerBuilder()
                 .setAccentColor(0x10b981)
                 .addTextDisplayComponents(
-                    textDisplay => textDisplay
+                    new TextDisplayBuilder()
                         .setContent(`**🎯 How to Challenge Players**\n\nUse game commands like \`/rps @user 100\` or \`/tictactoe @user 50\` to challenge other players!\n\nBoth players must accept before the game starts.`)
                 )
-                .addSeparatorComponents(separator => separator)
+                .addSeparatorComponents(new SeparatorBuilder())
                 .addTextDisplayComponents(
-                    textDisplay => textDisplay
+                    new TextDisplayBuilder()
                         .setContent(`**💎 Payouts & Fees**\n\n• Winner gets **1.85x** their bet\n• Loser loses their wager\n• 15% goes to "Arcade Fee" (keeps economy balanced)`)
                 )
                 .addActionRowComponents(
-                    actionRow => actionRow
-                        .setComponents([{
-                            type: 2,
-                            style: 3, // Success
-                            label: 'Got it! Let me play!',
-                            custom_id: 'tutorial_complete',
-                            emoji: { name: '✅' }
-                        }])
+                    new ActionRowBuilder().addComponents(completeButton)
                 );
 
             await interaction.update({
@@ -151,20 +150,20 @@ module.exports = {
             const arcadeTokenEmoji = '<:ArcadeTokens:1420147365213507686>';
             const goldenJoystickEmoji = '<:GoldenJoysticks:1420147415868244148>';
             
+            const balanceSection = new SectionBuilder()
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder()
+                        .setContent(`**💰 Your Starting Balance**\n\n${arcadeTokenEmoji} **Arcade Tokens:** \`1,000\` AT\n${goldenJoystickEmoji} **Golden Joysticks:** \`0\` GJ\n\nNow try challenging someone to a game!`)
+                );
+
             const completeContainer = new ContainerBuilder()
                 .setAccentColor(0x10b981)
                 .addTextDisplayComponents(
-                    textDisplay => textDisplay
+                    new TextDisplayBuilder()
                         .setContent(`**🎉 Welcome to Arcade Empire!**\n\nYou're all set up and ready to play! Here's your starting balance:`)
                 )
-                .addSeparatorComponents(separator => separator)
-                .addSectionComponents(
-                    section => section
-                        .addTextDisplayComponents(
-                            textDisplay => textDisplay
-                                .setContent(`**💰 Your Starting Balance**\n\n${arcadeTokenEmoji} **Arcade Tokens:** \`1,000\` AT\n${goldenJoystickEmoji} **Golden Joysticks:** \`0\` GJ\n\nNow try challenging someone to a game!`)
-                        )
-                );
+                .addSeparatorComponents(new SeparatorBuilder())
+                .addSectionComponents(balanceSection);
 
             await interaction.update({
                 components: [completeContainer],
