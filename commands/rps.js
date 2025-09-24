@@ -122,78 +122,88 @@ module.exports = {
     },
 
     async handleButton(interaction, client, DatabaseManager) {
-        const [action, role, status, challengeId] = interaction.customId.split('_').slice(1);
-        const challengeData = pendingChallenges.get(challengeId);
+        const parts = interaction.customId.split('_');
+        const action = parts[1];
         
-        if (!challengeData) {
-            return this.sendError(interaction, 'This challenge has expired or been cancelled.', true);
-        }
+        if (action === 'challenger' || action === 'opponent') {
+            const role = parts[1];
+            const status = parts[2];
+            const challengeId = parts.slice(3).join('_');
+            
+            const challengeData = pendingChallenges.get(challengeId);
+            
+            if (!challengeData) {
+                return this.sendError(interaction, 'This challenge has expired or been cancelled.', true);
+            }
 
-        // Challenger confirmation
-        if (role === 'challenger' && interaction.user.id === challengeData.challenger.id) {
-            if (status === 'decline') {
-                return this.cancelChallenge(interaction, challengeId, client, 'Challenger cancelled the challenge.');
+            // Challenger confirmation
+            if (role === 'challenger' && interaction.user.id === challengeData.challenger.id) {
+                if (status === 'decline') {
+                    return this.cancelChallenge(interaction, challengeId, client, 'Challenger cancelled the challenge.');
+                }
+                
+                if (status === 'accept') {
+                    challengeData.step = 'opponent_confirm';
+                    
+                    const arcadeTokenEmoji = '<:ArcadeTokens:1420147365213507686>';
+                    
+                    const acceptButton = new ButtonBuilder()
+                        .setCustomId(`rps_opponent_accept_${challengeId}`)
+                        .setLabel('Accept Challenge!')
+                        .setStyle(ButtonStyle.Success)
+                        .setEmoji('⚔️');
+
+                    const declineButton = new ButtonBuilder()
+                        .setCustomId(`rps_opponent_decline_${challengeId}`)
+                        .setLabel('Decline')
+                        .setStyle(ButtonStyle.Danger)
+                        .setEmoji('❌');
+
+                    const wagerSection = new SectionBuilder()
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder()
+                                .setContent(`**💰 Wager:** ${arcadeTokenEmoji} ${challengeData.wager.toLocaleString()} AT\n**🏆 Winner Gets:** ${arcadeTokenEmoji} ${Math.floor(challengeData.wager * 1.85).toLocaleString()} AT\n\n**${challengeData.opponent.username}, do you accept?**`)
+                        );
+
+                    const opponentContainer = new ContainerBuilder()
+                        .setAccentColor(0xf59e0b)
+                        .addTextDisplayComponents(
+                            new TextDisplayBuilder()
+                                .setContent(`**🎯 Rock Paper Scissors Challenge**\n\n${challengeData.challenger.username} has challenged you to Rock Paper Scissors!`)
+                        )
+                        .addSeparatorComponents(new SeparatorBuilder())
+                        .addSectionComponents(wagerSection)
+                        .addActionRowComponents(
+                            new ActionRowBuilder().addComponents(acceptButton, declineButton)
+                        );
+
+                    await interaction.update({
+                        components: [opponentContainer],
+                        flags: MessageFlags.IsComponentsV2
+                    });
+
+                    // Set timeout for opponent response
+                    setTimeout(() => this.timeoutChallenge(challengeId, client, interaction), 30000);
+                }
             }
             
-            if (status === 'accept') {
-                challengeData.step = 'opponent_confirm';
+            // Opponent response
+            else if (role === 'opponent' && interaction.user.id === challengeData.opponent.id) {
+                if (status === 'decline') {
+                    return this.cancelChallenge(interaction, challengeId, client, `${challengeData.opponent.username} declined the challenge.`);
+                }
                 
-                const arcadeTokenEmoji = '<:ArcadeTokens:1420147365213507686>';
-                
-                const acceptButton = new ButtonBuilder()
-                    .setCustomId(`rps_opponent_accept_${challengeId}`)
-                    .setLabel('Accept Challenge!')
-                    .setStyle(ButtonStyle.Success)
-                    .setEmoji('⚔️');
-
-                const declineButton = new ButtonBuilder()
-                    .setCustomId(`rps_opponent_decline_${challengeId}`)
-                    .setLabel('Decline')
-                    .setStyle(ButtonStyle.Danger)
-                    .setEmoji('❌');
-
-                const wagerSection = new SectionBuilder()
-                    .addTextDisplayComponents(
-                        new TextDisplayBuilder()
-                            .setContent(`**💰 Wager:** ${arcadeTokenEmoji} ${challengeData.wager.toLocaleString()} AT\n**🏆 Winner Gets:** ${arcadeTokenEmoji} ${Math.floor(challengeData.wager * 1.85).toLocaleString()} AT\n\n**${challengeData.opponent.username}, do you accept?**`)
-                    );
-
-                const opponentContainer = new ContainerBuilder()
-                    .setAccentColor(0xf59e0b)
-                    .addTextDisplayComponents(
-                        new TextDisplayBuilder()
-                            .setContent(`**🎯 Rock Paper Scissors Challenge**\n\n${challengeData.challenger.username} has challenged you to Rock Paper Scissors!`)
-                    )
-                    .addSeparatorComponents(new SeparatorBuilder())
-                    .addSectionComponents(wagerSection)
-                    .addActionRowComponents(
-                        new ActionRowBuilder().addComponents(acceptButton, declineButton)
-                    );
-
-                await interaction.update({
-                    components: [opponentContainer],
-                    flags: MessageFlags.IsComponentsV2
-                });
-
-                // Set timeout for opponent response
-                setTimeout(() => this.timeoutChallenge(challengeId, client, interaction), 30000);
-            }
-        }
-        
-        // Opponent response
-        else if (role === 'opponent' && interaction.user.id === challengeData.opponent.id) {
-            if (status === 'decline') {
-                return this.cancelChallenge(interaction, challengeId, client, `${challengeData.opponent.username} declined the challenge.`);
-            }
-            
-            if (status === 'accept') {
-                return this.startGame(interaction, challengeId, client, DatabaseManager);
+                if (status === 'accept') {
+                    return this.startGame(interaction, challengeId, client, DatabaseManager);
+                }
             }
         }
         
         // Game moves
         else if (action === 'move') {
-            return this.handleMove(interaction, challengeId, role, status, client, DatabaseManager);
+            const move = parts[2];
+            const challengeId = parts.slice(3).join('_');
+            return this.handleMove(interaction, challengeId, move, client, DatabaseManager);
         }
     },
 
@@ -279,7 +289,7 @@ module.exports = {
         }
     },
 
-    async handleMove(interaction, challengeId, move, gameId, client, DatabaseManager) {
+    async handleMove(interaction, challengeId, move, client, DatabaseManager) {
         const gameData = activeGames.get(challengeId);
         if (!gameData) {
             return this.sendError(interaction, 'This game has expired or ended.', true);
