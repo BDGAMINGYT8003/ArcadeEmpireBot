@@ -1,0 +1,23 @@
+{
+  "name": "arcade-empire-bot",
+  "version": "1.0.0",
+  "description": "A sophisticated Discord.js v14 bot with multiplayer minigames and economy system",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "games",
+    "economy"
+  ],
+  "author": "Arcade Empire",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.22.1"
+  },
+  "engines": {
+    "node": ">=16.9.0"
+  }
+}
