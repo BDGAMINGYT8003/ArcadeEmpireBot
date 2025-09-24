@@ -107,7 +107,7 @@ module.exports = {
                     .setContent(`**💰 Currency System**\n\n${arcadeTokenEmoji} **Arcade Tokens (AT)** - Primary currency for games\n${goldenJoystickEmoji} **Golden Joysticks (GJ)** - Premium currency for special features\n\nYou start with **1,000 AT** and **0 GJ**!`)
             )
             .addActionRowComponents(
-                actionRow => actionRow.addComponents(nextButton)
+                new ActionRowBuilder().addComponents(nextButton)
             );
 
         await interaction.reply({
@@ -139,7 +139,7 @@ module.exports = {
                         .setContent(`**💎 Payouts & Fees**\n\n• Winner gets **1.85x** their bet\n• Loser loses their wager\n• 15% goes to "Arcade Fee" (keeps economy balanced)`)
                 )
                 .addActionRowComponents(
-                    actionRow => actionRow.addComponents(completeButton)
+                    new ActionRowBuilder().addComponents(completeButton)
                 );
 
             await interaction.update({
