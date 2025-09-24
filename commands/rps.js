@@ -108,7 +108,7 @@ module.exports = {
             )
             .addSeparatorComponents(new SeparatorBuilder())
             .addSectionComponents(wagerSection)
-            .addActionRowComponents(
+            .addComponents(
                 new ActionRowBuilder().addComponents(acceptButton, declineButton)
             );
 
@@ -276,7 +276,7 @@ module.exports = {
                     new TextDisplayBuilder()
                         .setContent(`**🎮 Make Your Move**\n\nChoose your move for Rock Paper Scissors!\nThis message is private - only you can see it.`)
                 )
-                .addActionRowComponents(
+                .addComponents(
                     new ActionRowBuilder().addComponents(rockButton, paperButton, scissorsButton)
                 );
 
