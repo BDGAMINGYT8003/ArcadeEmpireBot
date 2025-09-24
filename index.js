@@ -200,8 +200,16 @@ client.on('interactionCreate', async interaction => {
     else if (interaction.isButton()) {
         try {
             // Find the command that handles this button interaction
-            const commandName = interaction.customId.split('_')[0];
-            const command = client.commands.get(commandName);
+            let command = null;
+            
+            // Check tutorial buttons (handled by balance command)
+            if (interaction.customId.startsWith('tutorial_')) {
+                command = client.commands.get('balance');
+            } else {
+                // For other buttons, use the prefix method
+                const commandName = interaction.customId.split('_')[0];
+                command = client.commands.get(commandName);
+            }
             
             if (command && command.handleButton) {
                 await command.handleButton(interaction, client, DatabaseManager);
