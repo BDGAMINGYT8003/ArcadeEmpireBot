@@ -173,8 +173,8 @@ module.exports = {
                         )
                         .addSeparatorComponents(new SeparatorBuilder())
                         .addSectionComponents(wagerSection)
-                        .addActionRowComponents(
-                            new ActionRowBuilder().addComponents(acceptButton, declineButton)
+                        .addComponents(
+                            new ActionRowBuilder().addComponents(acceptButton, declineButton))
                         );
 
                     await interaction.update({
