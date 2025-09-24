@@ -4,9 +4,9 @@
     "username": "moinuddin",
     "arcadeTokens": 1000,
     "goldenJoysticks": 0,
-    "onboarded": true,
+    "onboarded": false,
     "gamesPlayed": 0,
     "gamesWon": 0,
-    "createdAt": 1758681449978
+    "createdAt": 1758681303463
   }
 }

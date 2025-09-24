@@ -23,12 +23,12 @@ module.exports = {
         const challenger = interaction.user;
         const opponent = interaction.options.getUser('opponent');
         const wager = interaction.options.getInteger('wager');
-
+        
         // Basic validation
         if (opponent.id === challenger.id) {
             return this.sendError(interaction, 'You cannot challenge yourself to a game!');
         }
-
+        
         if (opponent.bot) {
             return this.sendError(interaction, 'You cannot challenge bots to games!');
         }
@@ -36,11 +36,11 @@ module.exports = {
         // Check if users have profiles and are onboarded
         const challengerProfile = DatabaseManager.getUser(challenger.id);
         const opponentProfile = DatabaseManager.getUser(opponent.id);
-
+        
         if (!challengerProfile || !challengerProfile.onboarded) {
             return this.sendError(interaction, 'You need to complete the tutorial first! Use `/balance` to get started.');
         }
-
+        
         if (!opponentProfile || !opponentProfile.onboarded) {
             return this.sendError(interaction, `${opponent.username} hasn't joined Arcade Empire yet! They need to use any command to get started.`);
         }
@@ -59,7 +59,7 @@ module.exports = {
         if (client.activeUsers.has(challenger.id)) {
             return this.sendError(interaction, 'You are already in an active command. Please complete or cancel it before starting a new one.');
         }
-
+        
         if (client.activeUsers.has(opponent.id)) {
             return this.sendError(interaction, `${opponent.username} is already in an active game. Please wait for them to finish.`);
         }
@@ -76,12 +76,12 @@ module.exports = {
             wager: wager,
             step: 'challenger_confirm'
         };
-
+        
         pendingChallenges.set(challengeId, challengeData);
 
         // Send challenger confirmation
         const arcadeTokenEmoji = '<:ArcadeTokens:1420147365213507686>';
-
+        
         const acceptButton = new ButtonBuilder()
             .setCustomId(`tictactoe_challenger_accept_${challengeId}`)
             .setLabel('Yes, Challenge!')
@@ -124,14 +124,14 @@ module.exports = {
     async handleButton(interaction, client, DatabaseManager) {
         const customIdParts = interaction.customId.split('_');
         const action = customIdParts[1];
-
+        
         if (action === 'challenger' || action === 'opponent') {
             const role = action;
             const status = customIdParts[2];
             const challengeId = customIdParts.slice(3).join('_');
-
+            
             const challengeData = pendingChallenges.get(challengeId);
-
+            
             if (!challengeData) {
                 return this.sendError(interaction, 'This challenge has expired or been cancelled.', true);
             }
@@ -141,12 +141,12 @@ module.exports = {
                 if (status === 'decline') {
                     return this.cancelChallenge(interaction, challengeId, client, 'Challenger cancelled the challenge.');
                 }
-
+                
                 if (status === 'accept') {
                     challengeData.step = 'opponent_confirm';
-
+                    
                     const arcadeTokenEmoji = '<:ArcadeTokens:1420147365213507686>';
-
+                    
                     const acceptButton = new ButtonBuilder()
                         .setCustomId(`tictactoe_opponent_accept_${challengeId}`)
                         .setLabel('Accept Challenge!')
@@ -173,8 +173,8 @@ module.exports = {
                         )
                         .addSeparatorComponents(new SeparatorBuilder())
                         .addSectionComponents(wagerSection)
-                        .addComponents(
-                            new ActionRowBuilder().addComponents(acceptButton, declineButton))
+                        .addActionRowComponents(
+                            new ActionRowBuilder().addComponents(acceptButton, declineButton)
                         );
 
                     await interaction.update({
@@ -186,19 +186,19 @@ module.exports = {
                     setTimeout(() => this.timeoutChallenge(challengeId, client, interaction), 30000);
                 }
             }
-
+            
             // Opponent response
             else if (role === 'opponent' && interaction.user.id === challengeData.opponent.id) {
                 if (status === 'decline') {
                     return this.cancelChallenge(interaction, challengeId, client, `${challengeData.opponent.username} declined the challenge.`);
                 }
-
+                
                 if (status === 'accept') {
                     return this.startGame(interaction, challengeId, client, DatabaseManager);
                 }
             }
         }
-
+        
         // Handle game moves
         else if (action === 'move') {
             const position = parseInt(customIdParts[2]);
@@ -209,12 +209,12 @@ module.exports = {
 
     async startGame(interaction, challengeId, client, DatabaseManager) {
         const challengeData = pendingChallenges.get(challengeId);
-
+        
         // Deduct wagers from both players
         DatabaseManager.updateUser(challengeData.challenger.id, {
             arcadeTokens: DatabaseManager.getUser(challengeData.challenger.id).arcadeTokens - challengeData.wager
         });
-
+        
         DatabaseManager.updateUser(challengeData.opponent.id, {
             arcadeTokens: DatabaseManager.getUser(challengeData.opponent.id).arcadeTokens - challengeData.wager
         });
@@ -227,7 +227,7 @@ module.exports = {
             step: 'playing',
             interaction: interaction
         };
-
+        
         activeGames.set(challengeId, gameData);
         pendingChallenges.delete(challengeId);
 
@@ -242,7 +242,7 @@ module.exports = {
             : gameData.opponent.username;
 
         const currentPlayerSymbol = gameData.currentPlayer === gameData.challenger.id ? 'X' : 'O';
-
+        
         const gameContainer = new ContainerBuilder()
             .setAccentColor(0x8b5cf6)
             .addTextDisplayComponents(
@@ -258,13 +258,13 @@ module.exports = {
         // Add three rows of buttons for the game board
         for (let row = 0; row < 3; row++) {
             const rowButtons = [];
-
+            
             for (let col = 0; col < 3; col++) {
                 const position = row * 3 + col;
                 const cellValue = board[position];
-
+                
                 let label, style, disabled;
-
+                
                 if (cellValue === null) {
                     label = '⬜';
                     style = ButtonStyle.Secondary;
@@ -278,18 +278,18 @@ module.exports = {
                     style = ButtonStyle.Primary;
                     disabled = true;
                 }
-
+                
                 const button = new ButtonBuilder()
                     .setCustomId(`tictactoe_move_${position}_${challengeId}`)
                     .setLabel(label)
                     .setStyle(style)
                     .setDisabled(disabled);
-
+                
                 rowButtons.push(button);
             }
-
-            gameContainer.addComponents(
-                new ActionRowBuilder().addComponents(...rowButtons)
+            
+            gameContainer.addActionRowComponents(
+                new ActionRowBuilder().addComponents(rowButtons)
             );
         }
 
@@ -321,7 +321,7 @@ module.exports = {
 
         // Check for win or tie
         const winner = this.checkWinner(gameData.board);
-
+        
         if (winner || this.isBoardFull(gameData.board)) {
             await this.endGame(interaction, challengeId, winner, client, DatabaseManager);
         } else {
@@ -329,7 +329,7 @@ module.exports = {
             gameData.currentPlayer = gameData.currentPlayer === gameData.challenger.id 
                 ? gameData.opponent.id 
                 : gameData.challenger.id;
-
+            
             await this.updateGameBoard(interaction, challengeId, gameData);
         }
     },
@@ -337,9 +337,9 @@ module.exports = {
     async endGame(interaction, challengeId, winner, client, DatabaseManager) {
         const gameData = activeGames.get(challengeId);
         const payout = Math.floor(gameData.wager * 1.85);
-
+        
         let winnerUser, loserUser, result;
-
+        
         if (winner === 'X') {
             winnerUser = gameData.challenger;
             loserUser = gameData.opponent;
@@ -428,7 +428,7 @@ module.exports = {
                 return board[a];
             }
         }
-
+        
         return null;
     },
 
